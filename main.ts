@@ -70,11 +70,11 @@ export default class CrosswordPlugin extends Plugin {
 			h = parseInt(grid.$height, 10),
 			cells: Record<string, Record<string, HTMLElement>> = {};
 		for (let y = 1; y <= h; ++y) {
-			const rowEl = child(tbody, "tr", "cxw-cell");
+			const rowEl = child(tbody, "tr");
 			const row: Record<string, HTMLElement> = {};
 			cells[y] = row;
 			for (let x = 1; x <= w; ++x)
-				row[x] = child(rowEl, "td");
+				row[x] = child(rowEl, "td", "cxw-cell");
 		}
 		for (const cell of grid.cell) {
 			const el = cells[cell.$y][cell.$x];
@@ -102,7 +102,7 @@ export default class CrosswordPlugin extends Plugin {
 				const t = child(li, "div", "cxw-clue-text");
 				const main = child(t, "div", "cxw-clue-body");
 				child(main, "span", "cwx-clue-body-text").innerHTML = c["#text"];
-				child(main, "span", "cxw-clue-format" ` (${c.$format})`);
+				child(main, "span", "cxw-clue-format", ` (${c.$format})`);
 				child(t, "div", "cxw-clue-citation",
 					`${c["$citation"]} 🡒 ${wordsById[c.$word].$solution.toUpperCase()}`
 				);
@@ -112,7 +112,7 @@ export default class CrosswordPlugin extends Plugin {
 	}
 }
 
-function newEl(tag: string, className?: string content?: string) {
+function newEl(tag: string, className?: string, content?: string) {
 	const h = document.createElement(tag);
 	if (className) h.classList.add(className);
 	if (content) h.innerText = content;
