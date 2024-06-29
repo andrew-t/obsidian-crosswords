@@ -12,3 +12,7 @@ To use this, enable it like any other plugin, then add a code block with the tag
     ```
 
 It's designed to work with exports from [MyCrossword](https://www.mycrossword.co.uk) and should render them as solved grids with annotated clue lists — the idea is so you can fairly easily _read_ the crossword, but it's not designed for _writing_ crosswords (yet?).
+
+## Usage
+
+You'll need to clone this repo into your `.obsidian/plugins` folder, then run `npm install` and `npm run build`. Then it should appear in your "installed plugins" folder and just work. You might have to reload your vault to make it appear.
