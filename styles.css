@@ -6,3 +6,64 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+.cxw-grid {
+	border-collapse: collapse;
+}
+
+.cxw-cell {
+	background: white;
+	border: 1px solid black;
+	height: 2.5em;
+	min-height: 2.5em;
+	max-height: 2.5em;
+	width: 2.5em;
+	min-width: 2.5em;
+	max-width: 2.5em;
+	padding: 0;
+	position: relative;
+}
+
+.cxw-block {
+	background: black;
+}
+
+.cxw-number {
+	font-size: 0.75em;
+	position: absolute;
+	top: 0.25em;
+	left: 0.25em;
+}
+
+.cxw-letter {
+	font-size: 1.5em;
+	position: absolute;
+	top: 0.25em;
+	left: 0.25em;
+	right: 0.25em;
+	text-align: center;
+}
+
+.cxw-clue-list-title { }
+
+.cxw-clue {
+	display: flex;
+	margin-left: 0;
+}
+
+.cxw-clue-number {
+	flex: 3em 0 0;
+}
+
+.cxw-clue-text {
+	flex: 5em 1 0;
+}
+
+.cxw-clue-body { }
+.cwx-clue-body-text { }
+.cxw-clue-format { }
+
+.cxw-clue-citation {
+	font-size: 0.75em;
+	color: #444;
+}
