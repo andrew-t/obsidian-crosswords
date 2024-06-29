@@ -3,9 +3,8 @@
 	"name": "Crossword viewer",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Shows XML crosswords visually",
+	"description": "Shows XML crosswords visually.",
 	"author": "Andrew Taylor",
 	"authorUrl": "https://andrewt.net",
-	"fundingUrl": "https://andrewt.net",
 	"isDesktopOnly": false
 }
