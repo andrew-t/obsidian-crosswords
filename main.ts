@@ -10,6 +10,8 @@ import {
 	MarkdownPostProcessorContext
 } from 'obsidian';
 import { XMLParser } from "fast-xml-parser";
+import parse from "./parsing";
+import { Crossword, Clue } from "./types";
 
 // Remember to rename these classes and interfaces!
 
@@ -44,18 +46,11 @@ export default class CrosswordPlugin extends Plugin {
 
 	cxw(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) {
 		try {
-			const parser = new XMLParser({
-				ignoreAttributes: false,
-				attributeNamePrefix : "$",
-				allowBooleanAttributes: true
-			});
-			const xml = parser.parse(source);
-			const { crossword } = xml["crossword-compiler"]["rectangular-puzzle"];
-
+			const crossword = parse(source);
 			el.innerHTML = "";
-			el.appendChild(this.renderGrid(crossword.grid));
-			el.appendChild(this.renderClues(crossword.clues, crossword.word));
-			console.log(xml);
+			el.appendChild(this.renderGrid(crossword));
+			el.appendChild(this.renderClues(crossword));
+			console.log(crossword);
 		} catch(e) {
 			el.innerHTML = "";
 			child(el, "h1", "cxw-error", "Error parsing XML");
@@ -63,52 +58,48 @@ export default class CrosswordPlugin extends Plugin {
 		} 
 	}
 
-	renderGrid(grid: any): HTMLElement {
+	renderGrid({ width, height, cells }: Crossword): HTMLElement {
 		const table = newEl('table', 'cxw-grid'),
-			tbody = child(table, "tbody"),
-			w = parseInt(grid.$width, 10),
-			h = parseInt(grid.$height, 10),
-			cells: Record<string, Record<string, HTMLElement>> = {};
-		for (let y = 1; y <= h; ++y) {
+			tbody = child(table, "tbody");
+		for (let y = 0; y < height; ++y) {
 			const rowEl = child(tbody, "tr");
-			const row: Record<string, HTMLElement> = {};
-			cells[y] = row;
-			for (let x = 1; x <= w; ++x)
-				row[x] = child(rowEl, "td", "cxw-cell");
-		}
-		for (const cell of grid.cell) {
-			const el = cells[cell.$y][cell.$x];
-			if (cell.$type == 'block')
-				el.classList.add('cxw-block');
-			if (cell.$number)
-				child(el, "span", "cxw-number", cell.$number);
-			if (cell.$solution)
-				child(el, "div", "cxw-letter", cell.$solution);
+			for (let x = 0; x < width; ++x) {
+				const el = child(rowEl, "td", "cxw-cell");
+				const cell = cells[y][x];
+				if (cell.isBlock)
+					el.classList.add('cxw-block');
+				if (cell.number)
+					child(el, "span", "cxw-number", cell.number);
+				if (cell.solution)
+					child(el, "div", "cxw-letter", cell.solution);
+			}
 		}
 		return table;
 	}
 
-	renderClues(clues: any, words: any) {
-		const wordsById: Record<string, { $solution: string }> = {};
-		for (const word of words) wordsById[word.$id] = word;
+	renderClues({ across, down }: Crossword) {
 		const el = document.createElement('div');
-		for (const { title, clue } of clues) {
-			const e = child(el, "div");
-			child(e, "h2", "cxw-clue-list-title", title.b ?? title);
-			const ol = child(e, "ol");
-			for (const c of clue) {
-				const li = child(ol, "li", "cxw-clue");
-				child(li, "div", "cxw-clue-number", c.$number + '.');
-				const t = child(li, "div", "cxw-clue-text");
-				const main = child(t, "div", "cxw-clue-body");
-				child(main, "span", "cwx-clue-body-text").innerHTML = c["#text"];
-				child(main, "span", "cxw-clue-format", ` (${c.$format})`);
-				child(t, "div", "cxw-clue-citation",
-					`${c["$citation"]} 🡒 ${wordsById[c.$word].$solution.toUpperCase()}`
-				);
-			}
-		}
+		this.renderClueSet(el, "Across", across);
+		this.renderClueSet(el, "Down", down);
 		return el;
+	}
+
+	renderClueSet(parent: HTMLElement, title: string, clues: Clue[]) {
+		const e = child(parent, "div");
+		child(e, "h2", "cxw-clue-list-title", title);
+		const ol = child(e, "ol");
+		for (const c of clues) {
+			const li = child(ol, "li", "cxw-clue");
+			child(li, "div", "cxw-clue-number", c.number + '.');
+			const t = child(li, "div", "cxw-clue-text");
+			const main = child(t, "div", "cxw-clue-body");
+			child(main, "span", "cwx-clue-body-text").innerHTML = c.html;
+			child(main, "span", "cxw-clue-format", ` (${c.format})`);
+			if (c.explanation && c.solution) child(t, "div", "cxw-clue-citation", `${c.explanation} 🡒 ${c.solution.toUpperCase()}`);
+			else if (c.explanation) child(t, "div", "cxw-clue-citation", c.explanation);
+			else if (c.solution) child(t, "div", "cxw-clue-citation", c.solution);
+		}
+		return e;
 	}
 }
 
