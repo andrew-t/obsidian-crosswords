@@ -14,6 +14,7 @@ import { XMLParser } from "fast-xml-parser";
 
 import parse from "./parsing";
 import Crossword, { Clue, Cell, DummyClue, Direction, Across, Down, parseLightKey } from "./crossword";
+import Highlighter from "./highlight";
 
 // Remember to rename these classes and interfaces!
 
@@ -34,10 +35,6 @@ export default class CrosswordPlugin extends Plugin {
         );
 	}
 
-	onunload() {
-
-	}
-
 	async loadSettings() {
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
 	}
@@ -51,45 +48,7 @@ export default class CrosswordPlugin extends Plugin {
 			const crossword = parse(source);
 			crossword.check();
 			el.innerHTML = "";
-
-			const clueEls = new Map<Clue | DummyClue, HTMLElement>();
-			const cellEls = new Map<Cell, HTMLElement>();
-			
-			let highlight: string | null = null;
-			function highlightCell(x: number, y: number) {
-				const lights = crossword.lights.filter(l => {
-					const { direction } = parseLightKey(l.id);
-					return (direction == Across && l.y == y && l.x <= x && l.x + l.length - 1 >= x) ||
-						(direction == Down && l.x == x && l.y <= y && l.y + l.length - 1 >= y);
-				});
-				const clues = crossword.clues.filter(c => c.id.split(", ").some(x => lights.some(l => l.id == x)));
-				const i = clues.findIndex(c => c.id == highlight);
-				if (i < 0) highlight = clues[0].id;
-				else if (i == clues.length - 1) highlight = null;
-				else highlight = clues[i + 1].id;
-				showHighlight();
-			}
-			function highlightClue(id: string) {
-				if (highlight == id) highlight = null;
-				else highlight = id;
-				showHighlight();
-			}
-			function showHighlight() {
-				console.log("Highlighted clue is now", highlight);
-				for (const e of qs(el, ".cxw-highlight"))
-					e.classList.remove("cxw-highlight");
-				if (!highlight) return;
-				const clue = crossword.clues.find(c => c.id == highlight)!;
-				clueEls.get(clue)!.classList.add("cxw-highlight");
-				for (const lightId of clue.id.split(", ")) {
-					const light = crossword.lights.find(l => l.id == lightId)!;
-					for (let i = 0; i < light.length; ++i) {
-						const { direction } = parseLightKey(lightId);
-						if (direction == Across) cellEls.get(crossword.grid[light.y][light.x + i])!.classList.add("cxw-highlight");
-						else cellEls.get(crossword.grid[light.y + i][light.x])!.classList.add("cxw-highlight");
-					}
-				}
-			}
+			const hl = new Highlighter(crossword, el);
 
 			const table = child(el, 'table', 'cxw-grid'),
 				tbody = child(table, "tbody");
@@ -98,7 +57,7 @@ export default class CrosswordPlugin extends Plugin {
 				for (let x = 0; x < crossword.width; ++x) {
 					const el = child(rowEl, "td", "cxw-cell");
 					const cell = crossword.grid[y][x];
-					cellEls.set(cell, el);
+					hl.registerCell(x, y, el);
 					if (cell.isBlock)
 						el.classList.add('cxw-block');
 					if (cell.number)
@@ -109,7 +68,6 @@ export default class CrosswordPlugin extends Plugin {
 					if (cell.followsAcross == '-') el.classList.add("cxw-follows-across-hyphen");
 					if (cell.followsDown == ' ') el.classList.add("cxw-follows-down-bar");
 					if (cell.followsDown == '-') el.classList.add("cxw-follows-down-hyphen");
-					el.addEventListener('click', () => highlightCell(x, y));
 				}
 			}
 
@@ -120,8 +78,7 @@ export default class CrosswordPlugin extends Plugin {
 				const ol = child(e, "ol");
 				for (const c of crossword.cluesInDirection(direction)) {
 					const li = child(ol, "li", "cxw-clue");
-					li.addEventListener('click', () => highlightClue(c.id));
-					clueEls.set(c, li);
+					hl.registerClue(c, li);
 					child(li, "div", "cxw-clue-number", crossword.friendlyClueKey(c.id, direction) + '.');
 					const t = child(li, "div", "cxw-clue-text");
 					const main = child(t, "div", "cxw-clue-body");
@@ -168,9 +125,4 @@ function child(parent: HTMLElement, tag: string, className?: string, content?: s
 	const h = newEl(tag, className, content);
 	parent.appendChild(h);
 	return h;
-}
-
-function *qs(parent: HTMLElement, selector: string) {
-	const list = parent.querySelectorAll(selector);
-	for (let i = 0; i < list.length; ++i) yield list[i];
 }
