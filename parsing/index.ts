@@ -1,6 +1,6 @@
 import { readXml } from "./xml";
 import { readMd } from "./md";
-import { Crossword } from "../types";
+import Crossword from "../crossword";
 
 export default function parse(source: string): Crossword {
 	if (source[0] == '<') {

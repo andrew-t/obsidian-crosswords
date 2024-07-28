@@ -1,5 +1,7 @@
-import { Crossword } from "../types";
 import { XMLParser } from "fast-xml-parser";
+
+import Crossword from "../crossword";
+import { directionFromTitle } from "./direction";
 
 interface Grid {
 	$width: string;
@@ -43,49 +45,39 @@ interface Word {
 	$solution: string;
 }
 
-export function readXml(source: string): Crossword {
-	const parser = new XMLParser({
-		ignoreAttributes: false,
-		attributeNamePrefix : "$",
-		allowBooleanAttributes: true
-	});
-	const xml = parser.parse(source);
-	const { crossword } = xml["crossword-compiler"]["rectangular-puzzle"];
+const parser = new XMLParser({
+	ignoreAttributes: false,
+	attributeNamePrefix : "$",
+	allowBooleanAttributes: true
+});
 
+export function readXml(source: string): Crossword {
+	const xml = parser.parse(source);
+
+	const { crossword } = xml["crossword-compiler"]["rectangular-puzzle"];
 	const grid: Grid = crossword.grid;
 	const clues: ClueSet[] = crossword.clues;
 	const word: Word[] = crossword.word;
 
-	const width = parseInt(grid.$width, 10),
-		height = parseInt(grid.$height, 10);
-	const cxw: Crossword = {
-		width,
-		height,
-		cells: [],
-		across: [],
-		down: []
-	};
-	for (let y = 0; y < height; ++y) cxw.cells[y] = [];
-	for (const cell of grid.cell)
-		cxw.cells[parseInt(cell.$y, 10) - 1][parseInt(cell.$x, 10) - 1] =
-			cell.$type == 'block'
-				? { isBlock: true }
-				: { solution: cell.$solution, number: cell.$number };
+	const cxw = new Crossword(parseInt(grid.$width, 10), parseInt(grid.$height, 10));
+
+	for (const cell of grid.cell) {
+		const x = parseInt(cell.$x, 10) - 1,
+			y = parseInt(cell.$y, 10) - 1;
+		if (cell.$type == 'block') cxw.setBlockCell(x, y);
+		else cxw.setLetterCell(x, y, cell.$solution);
+	}
+
 	for (const { title, clue } of clues) {
-		const arr = getArr(cxw, title);
-		for (const c of clue) arr.push({
-			number: c.$number,
+		const direction = directionFromTitle(title.b);
+		for (const c of clue) cxw.setClue({
+			id: c.$number,
 			format: c.$format,
 			solution: word.find(w => w.$id == c.$word)!.$solution,
-			html: c['#text'],
+			md: `<span>${c['#text']}</span>`, // wrap it in a span to stop any accidental markdown rendering
 			explanation: c.$citation,
-		})
+		}, direction)
 	}
-	return cxw;
-}
 
-function getArr(cxw: Crossword, title: { b: string }) {
-	if (title.b == "Across") return cxw.across;
-	if (title.b == "Down") return cxw.down;
-	throw new Error(`Unexpected clue direction: ${title.b}`);
+	return cxw;
 }

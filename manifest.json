@@ -1,7 +1,7 @@
 {
 	"id": "crosswords",
 	"name": "Crossword viewer",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Shows XML crosswords visually.",
 	"author": "Andrew Taylor",
