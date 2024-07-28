@@ -70,13 +70,13 @@ export function readXml(source: string): Crossword {
 
 	for (const { title, clue } of clues) {
 		const direction = directionFromTitle(title.b);
-		for (const c of clue) cxw.setClue({
-			id: c.$number,
+		for (const c of clue) if (c.$format) cxw.setClue({
+			id: c.$number.replace(/\//g, ", "),
 			format: c.$format,
 			solution: word.find(w => w.$id == c.$word)!.$solution,
 			md: `<span>${c['#text']}</span>`, // wrap it in a span to stop any accidental markdown rendering
 			explanation: c.$citation,
-		}, direction)
+		}, direction);
 	}
 
 	return cxw;

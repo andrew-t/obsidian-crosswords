@@ -16,8 +16,6 @@ import parse from "./parsing";
 import Crossword, { Clue, Cell, DummyClue, Direction, Across, Down, parseLightKey } from "./crossword";
 import Highlighter from "./highlight";
 
-// Remember to rename these classes and interfaces!
-
 interface CrosswordPluginSettings {
 }
 
