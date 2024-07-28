@@ -36,6 +36,7 @@ It's designed to work with exports from [MyCrossword](https://www.mycrossword.co
 	```
 
 You can also skip the clue section headers if you include the direction in the clues:
+
 	```cxw
 	HAT
 	O#A
