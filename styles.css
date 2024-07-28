@@ -54,7 +54,7 @@ td.cxw-block {
 
 .cxw-clue {
 	display: flex;
-	padding-left: 0;
+	margin-inline-start: 0 !important;
 }
 
 .cxw-clue-number {
@@ -109,4 +109,8 @@ td.cxw-block {
 	width: 1px;
 	height: 0.4em;
 	z-index: 1000;
+}
+
+.cxw-highlight {
+	background: #cdf !important;
 }

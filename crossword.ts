@@ -35,6 +35,13 @@ export interface Clue {
 	solution?: string;
 	md: string;
 	explanation?: string;
+	noClue?: false;
+}
+
+export interface DummyClue {
+	id: string;
+	noClue: true;
+	text: string;
 }
 
 export default class Crossword {
@@ -83,7 +90,7 @@ export default class Crossword {
 		this.clues = this.clues.filter(c => c.id === id);
 	}
 
-	*cluesInDirection(direction: Direction) {
+	*cluesInDirection(direction: Direction): Iterable<Clue | DummyClue> {
 		for (const light of this.lights) {
 			if (parseLightKey(light.id).direction != direction) continue;
 			const clues = this.clues.filter(clue => clue.id.startsWith(light.id));
@@ -92,24 +99,14 @@ export default class Crossword {
 				continue;
 			}
 			const refClues = this.clues.filter(clue => clue.id.includes(`, ${light.id}`));
-			if (refClues.length) {
-				yield {
-					id: light.id,
-					noClue: true,
-					text: `See ${refClues.map(c => c.id.replace(/,.*$/, '')).join(", ")}`
-				};
-				continue;
-			}
-			yield { id: light.id, noClue: true, text: "Unclued" };
+			yield {
+				id: light.id,
+				noClue: true,
+				text: refClues.length
+					? `See ${refClues.map(c => c.id.replace(/,.*$/, '')).join(", ")}`
+					: "Unclued"
+			};
 		}
-		const clues: Clue[] = [];
-		for (const clue of this.clues)
-			if (directionFromString(clue.id.replace(/^\d+([ad]).*$/, "$1")) == direction)
-				clues.push(clue);
-		// TODO: also include lights clued as part of compounds in this list
-		// TODO: be more clever about this:
-		clues.sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10));
-		return clues;
 	}
 
 	renumberCells() {
